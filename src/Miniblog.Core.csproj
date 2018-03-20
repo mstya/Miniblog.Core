@@ -30,10 +30,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\" />
     <Folder Include="Mappers\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="wwwroot\Posts\636570721993735050.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Entities\BlogContext.cs" />
+    <Compile Remove="Entities\Category.cs" />
+    <Compile Remove="Entities\Comment.cs" />
+    <Compile Remove="Migrations\20180319164951_InitialCreate.Designer.cs" />
+    <Compile Remove="Migrations\20180319164951_InitialCreate.cs" />
+    <Compile Remove="Services\FileBlogService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
   </ItemGroup>
 </Project>

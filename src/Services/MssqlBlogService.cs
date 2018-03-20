@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Miniblog.Core.Entities;
+using Miniblog.Core.Db.Entities;
 
 namespace Miniblog.Core.Services
 {

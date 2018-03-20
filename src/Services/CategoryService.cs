@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Miniblog.Core.Entities;
+using Miniblog.Core.Db.Entities;
 
 namespace Miniblog.Core.Services
 {

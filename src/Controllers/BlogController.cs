@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Miniblog.Core.Entities;
+using Miniblog.Core.Db.Entities;
 using Miniblog.Core.Mappers;
 using Miniblog.Core.Models;
 using Miniblog.Core.Services;

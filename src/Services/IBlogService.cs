@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Miniblog.Core.Entities;
+using Miniblog.Core.Db.Entities;
 
 namespace Miniblog.Core.Services
 {
