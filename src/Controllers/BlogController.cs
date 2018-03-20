@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xml;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Miniblog.Core.Entities;
+using Miniblog.Core.Mappers;
 using Miniblog.Core.Models;
 using Miniblog.Core.Services;
 using WebEssentials.AspNetCore.Pwa;
@@ -17,36 +17,38 @@ namespace Miniblog.Core.Controllers
         private readonly IBlogService _blog;
         private readonly IOptionsSnapshot<BlogSettings> _settings;
         private readonly WebManifest _manifest;
+        private readonly ICategoryService categoryService;
 
-        public BlogController(IBlogService blog, IOptionsSnapshot<BlogSettings> settings, WebManifest manifest)
+        public BlogController(IBlogService blog, IOptionsSnapshot<BlogSettings> settings, WebManifest manifest, ICategoryService categoryService)
         {
             _blog = blog;
             _settings = settings;
             _manifest = manifest;
+            this.categoryService = categoryService;
         }
 
         [Route("/{page:int?}")]
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Index([FromRoute]int page = 0)
         {
-            var posts = await _blog.GetPosts(_settings.Value.PostsPerPage, _settings.Value.PostsPerPage * page);
+            var posts = await _blog.GetPostsAsync(_settings.Value.PostsPerPage, _settings.Value.PostsPerPage * page);
             ViewData["Title"] = _manifest.Name;
             ViewData["Description"] = _manifest.Description;
             ViewData["prev"] = $"/{page + 1}/";
             ViewData["next"] = $"/{(page <= 1 ? null : page - 1 + "/")}";
-            return View("~/Views/Blog/Index.cshtml", posts);
+            return View("~/Views/Blog/Index.cshtml", posts.ToPostViewModel());
         }
 
         [Route("/blog/category/{category}/{page:int?}")]
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Category(string category, int page = 0)
         {
-            var posts = (await _blog.GetPostsByCategory(category)).Skip(_settings.Value.PostsPerPage * page).Take(_settings.Value.PostsPerPage);
+            var posts = (await _blog.GetPostsByCategoryAsync(category)).Skip(_settings.Value.PostsPerPage * page).Take(_settings.Value.PostsPerPage).ToList();
             ViewData["Title"] = _manifest.Name + " " + category;
             ViewData["Description"] = $"Articles posted in the {category} category";
             ViewData["prev"] = $"/blog/category/{category}/{page + 1}/";
             ViewData["next"] = $"/blog/category/{category}/{(page <= 1 ? null : page - 1 + "/")}";
-            return View("~/Views/Blog/Index.cshtml", posts);
+            return View("~/Views/Blog/Index.cshtml", posts.ToPostViewModel());
         }
 
         // This is for redirecting potential existing URLs from the old Miniblog URL format
@@ -61,11 +63,11 @@ namespace Miniblog.Core.Controllers
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Post(string slug)
         {
-            var post = await _blog.GetPostBySlug(slug);
+            var post = await _blog.GetPostBySlugAsync(slug);
 
             if (post != null)
             {
-                return View(post);
+                return View(post.ToPostViewModel());
             }
 
             return NotFound();
@@ -77,14 +79,14 @@ namespace Miniblog.Core.Controllers
         {
             if (string.IsNullOrEmpty(id))
             {
-                return View(new Post());
+                return View(new PostViewModel());
             }
 
-            var post = await _blog.GetPostById(id);
+            var post = await _blog.GetPostByIdAsync(id);
 
             if (post != null)
             {
-                return View(post);
+                return View(post.ToPostViewModel());
             }
 
             return NotFound();
@@ -92,69 +94,50 @@ namespace Miniblog.Core.Controllers
 
         [Route("/blog/{slug?}")]
         [HttpPost, Authorize, AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> UpdatePost(Post post)
+        public async Task<IActionResult> UpdatePost(PostViewModel postViewModel)
         {
             if (!ModelState.IsValid)
             {
-                return View("Edit", post);
+                return View("Edit", postViewModel);
             }
 
-            var existing = await _blog.GetPostById(post.ID) ?? post;
+            var post = postViewModel.ToPost();
+            var existing = await _blog.GetPostByIdAsync(postViewModel.Id);
             string categories = Request.Form["categories"];
 
-            existing.Categories = categories.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToLowerInvariant()).ToList();
-            existing.Title = post.Title.Trim();
-            existing.Slug = !string.IsNullOrWhiteSpace(post.Slug) ? post.Slug.Trim() : Models.Post.CreateSlug(post.Title);
-            existing.IsPublished = post.IsPublished;
-            existing.Content = post.Content.Trim();
-            existing.Excerpt = post.Excerpt.Trim();
-
-            await _blog.SavePost(existing);
-
-            await SaveFilesToDisk(existing);
-
-            return Redirect(post.GetLink());
-        }
-
-        private async Task SaveFilesToDisk(Post post)
-        {
-            var imgRegex = new Regex("<img[^>].+ />", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            var base64Regex = new Regex("data:[^/]+/(?<ext>[a-z]+);base64,(?<base64>.+)", RegexOptions.IgnoreCase);
-
-            foreach (Match match in imgRegex.Matches(post.Content))
+            if(existing == null)
             {
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml("<root>" + match.Value + "</root>");
-
-                var img = doc.FirstChild.FirstChild;
-                var srcNode = img.Attributes["src"];
-                var fileNameNode = img.Attributes["data-filename"];
-
-                // The HTML editor creates base64 DataURIs which we'll have to convert to image files on disk
-                if (srcNode != null && fileNameNode != null)
-                {
-                    var base64Match = base64Regex.Match(srcNode.Value);
-                    if (base64Match.Success)
-                    {
-                        byte[] bytes = Convert.FromBase64String(base64Match.Groups["base64"].Value);
-                        srcNode.Value = await _blog.SaveFile(bytes, fileNameNode.Value).ConfigureAwait(false);
-
-                        img.Attributes.Remove(fileNameNode);
-                        post.Content = post.Content.Replace(match.Value, img.OuterXml);
-                    }
-                }
+                existing = post;
             }
+            else 
+            {
+                existing.Title = post.Title.Trim();
+                existing.Slug = !string.IsNullOrWhiteSpace(postViewModel.Slug) ? postViewModel.Slug.Trim() : PostViewModel.CreateSlug(postViewModel.Title);
+                existing.IsPublished = postViewModel.IsPublished;
+                existing.Content = postViewModel.Content.Trim();
+                existing.Excerpt = postViewModel.Excerpt.Trim();
+            }
+
+            await categoryService.RemoveForPost(existing.Id);
+            existing.Categories = categories.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(c => new Category
+            {
+                Name = c.Trim().ToLowerInvariant()
+            }).ToList();
+
+            await this._blog.SavePostAsync(existing);
+
+            return Redirect(postViewModel.GetLink());
         }
 
         [Route("/blog/deletepost/{id}")]
         [HttpPost, Authorize, AutoValidateAntiforgeryToken]
         public async Task<IActionResult> DeletePost(string id)
         {
-            var existing = await _blog.GetPostById(id);
-
+            var existing = await _blog.GetPostByIdAsync(id);
+            var cancellationToken = this.Response.HttpContext.RequestAborted;
             if (existing != null)
             {
-                await _blog.DeletePost(existing);
+                await _blog.DeletePostAsync(existing, cancellationToken);
                 return Redirect("/");
             }
 
@@ -163,9 +146,9 @@ namespace Miniblog.Core.Controllers
 
         [Route("/blog/comment/{postId}")]
         [HttpPost]
-        public async Task<IActionResult> AddComment(string postId, Comment comment)
+        public async Task<IActionResult> AddComment(string postId, CommentViewModel commentViewModel)
         {
-            var post = await _blog.GetPostById(postId);
+            var post = await _blog.GetPostByIdAsync(postId);
 
             if (!ModelState.IsValid)
             {
@@ -177,34 +160,35 @@ namespace Miniblog.Core.Controllers
                 return NotFound();
             }
 
-            comment.IsAdmin = User.Identity.IsAuthenticated;
-            comment.Content = comment.Content.Trim();
-            comment.Author = comment.Author.Trim();
-            comment.Email = comment.Email.Trim();
+            commentViewModel.IsAdmin = User.Identity.IsAuthenticated;
+            commentViewModel.Content = commentViewModel.Content.Trim();
+            commentViewModel.Author = commentViewModel.Author.Trim();
+            commentViewModel.Email = commentViewModel.Email.Trim();
 
             // the website form key should have been removed by javascript
             // unless the comment was posted by a spam robot
             if (!Request.Form.ContainsKey("website"))
             {
+                var comment = commentViewModel.ToComment();
                 post.Comments.Add(comment);
-                await _blog.SavePost(post);
+                await _blog.SavePostAsync(post);
             }
 
-            return Redirect(post.GetLink() + "#" + comment.ID);
+            return Redirect(post.GetLink() + "#" + commentViewModel.Id);
         }
 
         [Route("/blog/comment/{postId}/{commentId}")]
         [Authorize]
         public async Task<IActionResult> DeleteComment(string postId, string commentId)
         {
-            var post = await _blog.GetPostById(postId);
+            var post = await _blog.GetPostByIdAsync(postId);
 
             if (post == null)
             {
                 return NotFound();
             }
 
-            var comment = post.Comments.FirstOrDefault(c => c.ID.Equals(commentId, StringComparison.OrdinalIgnoreCase));
+            var comment = post.Comments.FirstOrDefault(c => c.Id.Equals(commentId, StringComparison.OrdinalIgnoreCase));
 
             if (comment == null)
             {
@@ -212,7 +196,7 @@ namespace Miniblog.Core.Controllers
             }
 
             post.Comments.Remove(comment);
-            await _blog.SavePost(post);
+            await _blog.SavePostAsync(post);
 
             return Redirect(post.GetLink() + "#comments");
         }

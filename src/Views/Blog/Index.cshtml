@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Post>
+﻿@model IEnumerable<PostViewModel>
 @inject IOptionsSnapshot<BlogSettings> settings
 @{
     int currentPage = int.Parse(ViewContext.RouteData.Values["page"] as string ?? "0");

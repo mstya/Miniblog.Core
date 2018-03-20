@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Miniblog.Core.Mappers;
 using WilderMinds.MetaWeblog;
 
 namespace Miniblog.Core.Services
@@ -27,13 +29,13 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
 
-            var newPost = new Models.Post
+            var newPost = new Models.PostViewModel
             {
                 Title = post.title,
-                Slug = !string.IsNullOrWhiteSpace(post.wp_slug) ? post.wp_slug : Models.Post.CreateSlug(post.title),
+                Slug = !string.IsNullOrWhiteSpace(post.wp_slug) ? post.wp_slug : Models.PostViewModel.CreateSlug(post.title),
                 Content = post.description,
                 IsPublished = publish,
-                Categories = post.categories
+                Categories = post.categories.ToList()
             };
 
             if (post.dateCreated != DateTime.MinValue)
@@ -41,20 +43,20 @@ namespace Miniblog.Core.Services
                 newPost.PubDate = post.dateCreated;
             }
 
-            _blog.SavePost(newPost).GetAwaiter().GetResult();
+            _blog.SavePostAsync(newPost.ToPost()).GetAwaiter().GetResult();
 
-            return newPost.ID;
+            return newPost.Id;
         }
 
         public bool DeletePost(string key, string postid, string username, string password, bool publish)
         {
             ValidateUser(username, password);
 
-            var post = _blog.GetPostById(postid).GetAwaiter().GetResult();
+            var post = _blog.GetPostByIdAsync(postid).GetAwaiter().GetResult();
 
             if (post != null)
             {
-                _blog.DeletePost(post).GetAwaiter().GetResult();
+                _blog.DeletePostAsync(post, CancellationToken.None).GetAwaiter().GetResult();
                 return true;
             }
 
@@ -65,7 +67,7 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
 
-            var existing = _blog.GetPostById(postid).GetAwaiter().GetResult();
+            var existing = _blog.GetPostByIdAsync(postid).GetAwaiter().GetResult();
 
             if (existing != null)
             {
@@ -73,14 +75,14 @@ namespace Miniblog.Core.Services
                 existing.Slug = post.wp_slug;
                 existing.Content = post.description;
                 existing.IsPublished = publish;
-                existing.Categories = post.categories;
+                //existing.Categories = post.categories.ToList();
 
                 if (post.dateCreated != DateTime.MinValue)
                 {
                     existing.PubDate = post.dateCreated;
                 }
 
-                _blog.SavePost(existing).GetAwaiter().GetResult();
+                _blog.SavePostAsync(existing).GetAwaiter().GetResult();
 
                 return true;
             }
@@ -92,25 +94,26 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
 
-            return _blog.GetCategories().GetAwaiter().GetResult()
-                           .Select(cat =>
-                               new CategoryInfo
-                               {
-                                   categoryid = cat,
-                                   title = cat
-                               })
-                           .ToArray();
+            return null;
+            //_blog.GetCategoriesAsync().GetAwaiter().GetResult()
+                           //.Select(cat =>
+                           //    new CategoryInfo
+                           //    {
+                           //        categoryid = cat,
+                           //        title = cat
+                           //    })
+                           //.ToArray();
         }
 
         public WilderMinds.MetaWeblog.Post GetPost(string postid, string username, string password)
         {
             ValidateUser(username, password);
 
-            var post = _blog.GetPostById(postid).GetAwaiter().GetResult();
+            var post = _blog.GetPostByIdAsync(postid).GetAwaiter().GetResult();
 
             if (post != null)
             {
-                return ToMetaWebLogPost(post);
+                return null;//ToMetaWebLogPost(post);
             }
 
             return null;
@@ -120,7 +123,7 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
 
-            return _blog.GetPosts(numberOfPosts).GetAwaiter().GetResult().Select(ToMetaWebLogPost).ToArray();
+            return null;//_blog.GetPostsAsync(numberOfPosts).GetAwaiter().GetResult().Select(ToMetaWebLogPost).ToArray();
         }
 
         public BlogInfo[] GetUsersBlogs(string key, string username, string password)
@@ -141,9 +144,9 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
             byte[] bytes = Convert.FromBase64String(mediaObject.bits);
-            string path = _blog.SaveFile(bytes, mediaObject.name).GetAwaiter().GetResult();
+            //string path = _blog.SaveFileAsync(bytes, mediaObject.name).GetAwaiter().GetResult();
 
-            return new MediaObjectInfo { url = path };
+            return null;//new MediaObjectInfo { url = path };
         }
 
         public UserInfo GetUserInfo(string key, string username, string password)
@@ -171,14 +174,14 @@ namespace Miniblog.Core.Services
             _context.HttpContext.User = new ClaimsPrincipal(identity);
         }
 
-        private WilderMinds.MetaWeblog.Post ToMetaWebLogPost(Models.Post post)
+        private WilderMinds.MetaWeblog.Post ToMetaWebLogPost(Models.PostViewModel post)
         {
             var request = _context.HttpContext.Request;
             string url = request.Scheme + "://" + request.Host;
 
             return new WilderMinds.MetaWeblog.Post
             {
-                postid = post.ID,
+                postid = post.Id,
                 title = post.Title,
                 wp_slug = post.Slug,
                 permalink = url + post.GetLink(),

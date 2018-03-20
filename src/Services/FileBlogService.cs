@@ -1,285 +1,354 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Miniblog.Core.Models;
+using Microsoft.EntityFrameworkCore;
+using Miniblog.Core.Entities;
 
 namespace Miniblog.Core.Services
 {
-    public class FileBlogService : IBlogService
-    {
-        private readonly List<Post> _cache = new List<Post>();
-        private readonly IHttpContextAccessor _contextAccessor;
-        private readonly string _folder;
+    //public class MssqlBlogService : IBlogService
+    //{
+    //    private BlogContext db;
+    //    private readonly IHttpContextAccessor contextAccessor;
 
-        public FileBlogService(IHostingEnvironment env, IHttpContextAccessor contextAccessor)
-        {
-            _folder = Path.Combine(env.WebRootPath, "Posts");
-            _contextAccessor = contextAccessor;
+    //    public MssqlBlogService(BlogContext db, IHttpContextAccessor contextAccessor)
+    //    {
+    //        this.db = db;
+    //        this.contextAccessor = contextAccessor;
+    //    }
 
-            Initialize();
-        }
+    //    public Task DeletePostAsync(Post post, CancellationToken token)
+    //    {
+    //        this.db.Posts.Remove(post);
+    //        return this.db.SaveChangesAsync(token);
+    //    }
 
-        public virtual Task<IEnumerable<Post>> GetPosts(int count, int skip = 0)
-        {
-            bool isAdmin = IsAdmin();
+    //    public Task<List<Category>> GetCategoriesAsync()
+    //    {
+    //        bool isAdmin = IsAdmin(); 
 
-            var posts = _cache
-                .Where(p => p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin))
-                .Skip(skip)
-                .Take(count);
+    //        return this.db.Posts.Where(p => p.IsPublished || isAdmin)
+    //            .SelectMany(post => post.Categories)
+    //            .Select(cat => cat)
+    //            .Distinct()
+    //                   .ToListAsync();
+    //    }
 
-            return Task.FromResult(posts);
-        }
+    //    public Task<Post> GetPostByIdAsync(string id)
+    //    {
+    //        return this.db.Posts.Include(c => c.Categories).Include(x => x.Comments).FirstOrDefaultAsync(x => x.Id == id);
+    //    }
 
-        public virtual Task<IEnumerable<Post>> GetPostsByCategory(string category)
-        {
-            bool isAdmin = IsAdmin();
+    //    public Task<Post> GetPostBySlugAsync(string slug)
+    //    {
+    //        return this.db.Posts.Include(c => c.Categories).Include(x => x.Comments).FirstOrDefaultAsync(x => x.Slug == slug);
+    //    }
 
-            var posts = from p in _cache
-                        where p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin)
-                        where p.Categories.Contains(category, StringComparer.OrdinalIgnoreCase)
-                        select p;
+    //    public Task<List<Post>> GetPostsAsync(int count, int skip = 0)
+    //    {
+    //        return this.db.Posts.Skip(skip).Take(count).Include(x => x.Comments).ToListAsync();
+    //    }
 
-            return Task.FromResult(posts);
+    //    public Task<List<Post>> GetPostsByCategoryAsync(string category)
+    //    {
+    //        return this.db.Posts.Where(x => x.Categories.Any(c => c.Name == category)).ToListAsync();
+    //    }
 
-        }
+    //    public Task<string> SaveFileAsync(byte[] bytes, string fileName, string suffix = null)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public virtual Task<Post> GetPostBySlug(string slug)
-        {
-            var post = _cache.FirstOrDefault(p => p.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
-            bool isAdmin = IsAdmin();
+    //    public async Task SavePostAsync(Post post)
+    //    {
+    //        if(string.IsNullOrEmpty(post.Id))
+    //        {
+    //            post.Id = Guid.NewGuid().ToString();
+    //            await this.db.Posts.AddAsync(post);
+    //            await this.db.SaveChangesAsync();
+    //            return;
+    //        }
 
-            if (post != null && post.PubDate <= DateTime.UtcNow && (post.IsPublished || isAdmin))
-            {
-                return Task.FromResult(post);
-            }
+    //        this.db.Posts.Update(post);
+    //        await this.db.SaveChangesAsync();
+    //    }
 
-            return Task.FromResult<Post>(null);
-        }
+    //    protected bool IsAdmin()
+    //    {
+    //        return this.contextAccessor.HttpContext?.User?.Identity.IsAuthenticated == true;
+    //    }
+    //}
 
-        public virtual Task<Post> GetPostById(string id)
-        {
-            var post = _cache.FirstOrDefault(p => p.ID.Equals(id, StringComparison.OrdinalIgnoreCase));
-            bool isAdmin = IsAdmin();
+    //public class FileBlogService : IBlogService
+    //{
+    //    private readonly List<PostViewModel> _cache = new List<PostViewModel>();
+    //    private readonly IHttpContextAccessor _contextAccessor;
+    //    private readonly string _folder;
 
-            if (post != null && post.PubDate <= DateTime.UtcNow && (post.IsPublished || isAdmin))
-            {
-                return Task.FromResult(post);
-            }
+    //    public FileBlogService(IHostingEnvironment env, IHttpContextAccessor contextAccessor)
+    //    {
+    //        _folder = Path.Combine(env.WebRootPath, "Posts");
+    //        _contextAccessor = contextAccessor;
 
-            return Task.FromResult<Post>(null);
-        }
+    //        Initialize();
+    //    }
 
-        public virtual Task<IEnumerable<string>> GetCategories()
-        {
-            bool isAdmin = IsAdmin();
+    //    public virtual Task<IEnumerable<PostViewModel>> GetPosts(int count, int skip = 0)
+    //    {
+    //        bool isAdmin = IsAdmin();
 
-            var categories = _cache
-                .Where(p => p.IsPublished || isAdmin)
-                .SelectMany(post => post.Categories)
-                .Select(cat => cat.ToLowerInvariant())
-                .Distinct();
+    //        var posts = _cache
+    //            .Where(p => p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin))
+    //            .Skip(skip)
+    //            .Take(count);
 
-            return Task.FromResult(categories);
-        }
+    //        return Task.FromResult(posts);
+    //    }
 
-        public async Task SavePost(Post post)
-        {
-            string filePath = GetFilePath(post);
-            post.LastModified = DateTime.UtcNow;
+    //    public virtual Task<IEnumerable<PostViewModel>> GetPostsByCategory(string category)
+    //    {
+    //        bool isAdmin = IsAdmin();
 
-            XDocument doc = new XDocument(
-                            new XElement("post",
-                                new XElement("title", post.Title),
-                                new XElement("slug", post.Slug),
-                                new XElement("pubDate", post.PubDate.ToString("yyyy-MM-dd HH:mm:ss")),
-                                new XElement("lastModified", post.LastModified.ToString("yyyy-MM-dd HH:mm:ss")),
-                                new XElement("excerpt", post.Excerpt),
-                                new XElement("content", post.Content),
-                                new XElement("ispublished", post.IsPublished),
-                                new XElement("categories", string.Empty),
-                                new XElement("comments", string.Empty)
-                            ));
+    //        var posts = from p in _cache
+    //                    where p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin)
+    //                    where p.Categories.Contains(category, StringComparer.OrdinalIgnoreCase)
+    //                    select p;
 
-            XElement categories = doc.XPathSelectElement("post/categories");
-            foreach (string category in post.Categories)
-            {
-                categories.Add(new XElement("category", category));
-            }
+    //        return Task.FromResult(posts);
 
-            XElement comments = doc.XPathSelectElement("post/comments");
-            foreach (Comment comment in post.Comments)
-            {
-                comments.Add(
-                    new XElement("comment",
-                        new XElement("author", comment.Author),
-                        new XElement("email", comment.Email),
-                        new XElement("date", comment.PubDate.ToString("yyyy-MM-dd HH:m:ss")),
-                        new XElement("content", comment.Content),
-                        new XAttribute("isAdmin", comment.IsAdmin),
-                        new XAttribute("id", comment.ID)
-                    ));
-            }
+    //    }
 
-            using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite))
-            {
-                await doc.SaveAsync(fs, SaveOptions.None, CancellationToken.None).ConfigureAwait(false);
-            }
+    //    public virtual Task<PostViewModel> GetPostBySlug(string slug)
+    //    {
+    //        var post = _cache.FirstOrDefault(p => p.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
+    //        bool isAdmin = IsAdmin();
 
-            if (!_cache.Contains(post))
-            {
-                _cache.Add(post);
-                SortCache();
-            }
-        }
+    //        if (post != null && post.PubDate <= DateTime.UtcNow && (post.IsPublished || isAdmin))
+    //        {
+    //            return Task.FromResult(post);
+    //        }
 
-        public Task DeletePost(Post post)
-        {
-            string filePath = GetFilePath(post);
+    //        return Task.FromResult<PostViewModel>(null);
+    //    }
 
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
+    //    public virtual Task<PostViewModel> GetPostById(string id)
+    //    {
+    //        var post = _cache.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+    //        bool isAdmin = IsAdmin();
 
-            if (_cache.Contains(post))
-            {
-                _cache.Remove(post);
-            }
+    //        if (post != null && post.PubDate <= DateTime.UtcNow && (post.IsPublished || isAdmin))
+    //        {
+    //            return Task.FromResult(post);
+    //        }
 
-            return Task.CompletedTask;
-        }
+    //        return Task.FromResult<PostViewModel>(null);
+    //    }
 
-        public async Task<string> SaveFile(byte[] bytes, string fileName, string suffix = null)
-        {
-            suffix = suffix ?? DateTime.UtcNow.Ticks.ToString();
+    //    public virtual Task<IEnumerable<string>> GetCategories()
+    //    {
+    //        bool isAdmin = IsAdmin();
 
-            string ext = Path.GetExtension(fileName);
-            string name = Path.GetFileNameWithoutExtension(fileName);
+    //        var categories = _cache
+    //            .Where(p => p.IsPublished || isAdmin)
+    //            .SelectMany(post => post.Categories)
+    //            .Select(cat => cat.ToLowerInvariant())
+    //            .Distinct();
 
-            string relative = $"files/{name}_{suffix}{ext}";
-            string absolute = Path.Combine(_folder, relative);
-            string dir = Path.GetDirectoryName(absolute);
+    //        return Task.FromResult(categories);
+    //    }
 
-            Directory.CreateDirectory(dir);
-            using (var writer = new FileStream(absolute, FileMode.CreateNew))
-            {
-                await writer.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
-            }
+    //    public async Task SavePost(PostViewModel post)
+    //    {
+    //        string filePath = GetFilePath(post);
+    //        post.LastModified = DateTime.UtcNow;
 
-            return "/Posts/" + relative;
-        }
+    //        XDocument doc = new XDocument(
+    //                        new XElement("post",
+    //                            new XElement("title", post.Title),
+    //                            new XElement("slug", post.Slug),
+    //                            new XElement("pubDate", post.PubDate.ToString("yyyy-MM-dd HH:mm:ss")),
+    //                            new XElement("lastModified", post.LastModified.ToString("yyyy-MM-dd HH:mm:ss")),
+    //                            new XElement("excerpt", post.Excerpt),
+    //                            new XElement("content", post.Content),
+    //                            new XElement("ispublished", post.IsPublished),
+    //                            new XElement("categories", string.Empty),
+    //                            new XElement("comments", string.Empty)
+    //                        ));
 
-        private string GetFilePath(Post post)
-        {
-            return Path.Combine(_folder, post.ID + ".xml");
-        }
+    //        XElement categories = doc.XPathSelectElement("post/categories");
+    //        foreach (string category in post.Categories)
+    //        {
+    //            categories.Add(new XElement("category", category));
+    //        }
 
-        private void Initialize()
-        {
-            LoadPosts();
-            SortCache();
-        }
+    //        XElement comments = doc.XPathSelectElement("post/comments");
+    //        foreach (CommentViewModel comment in post.Comments)
+    //        {
+    //            comments.Add(
+    //                new XElement("comment",
+    //                    new XElement("author", comment.Author),
+    //                    new XElement("email", comment.Email),
+    //                    new XElement("date", comment.PubDate.ToString("yyyy-MM-dd HH:m:ss")),
+    //                    new XElement("content", comment.Content),
+    //                    new XAttribute("isAdmin", comment.IsAdmin),
+    //                    new XAttribute("id", comment.Id)
+    //                ));
+    //        }
 
-        private void LoadPosts()
-        {
-            if (!Directory.Exists(_folder))
-                Directory.CreateDirectory(_folder);
+    //        using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite))
+    //        {
+    //            await doc.SaveAsync(fs, SaveOptions.None, CancellationToken.None).ConfigureAwait(false);
+    //        }
 
-            // Can this be done in parallel to speed it up?
-            foreach (string file in Directory.EnumerateFiles(_folder, "*.xml", SearchOption.TopDirectoryOnly))
-            {
-                XElement doc = XElement.Load(file);
+    //        if (!_cache.Contains(post))
+    //        {
+    //            _cache.Add(post);
+    //            SortCache();
+    //        }
+    //    }
 
-                Post post = new Post
-                {
-                    ID = Path.GetFileNameWithoutExtension(file),
-                    Title = ReadValue(doc, "title"),
-                    Excerpt = ReadValue(doc, "excerpt"),
-                    Content = ReadValue(doc, "content"),
-                    Slug = ReadValue(doc, "slug").ToLowerInvariant(),
-                    PubDate = DateTime.Parse(ReadValue(doc, "pubDate")),
-                    LastModified = DateTime.Parse(ReadValue(doc, "lastModified", DateTime.Now.ToString(CultureInfo.InvariantCulture))),
-                    IsPublished = bool.Parse(ReadValue(doc, "ispublished", "true")),
-                };
+    //    public Task DeletePost(PostViewModel post)
+    //    {
+    //        string filePath = GetFilePath(post);
 
-                LoadCategories(post, doc);
-                LoadComments(post, doc);
-                _cache.Add(post);
-            }
-        }
+    //        if (File.Exists(filePath))
+    //        {
+    //            File.Delete(filePath);
+    //        }
 
-        private static void LoadCategories(Post post, XElement doc)
-        {
-            XElement categories = doc.Element("categories");
-            if (categories == null)
-                return;
+    //        if (_cache.Contains(post))
+    //        {
+    //            _cache.Remove(post);
+    //        }
 
-            List<string> list = new List<string>();
+    //        return Task.CompletedTask;
+    //    }
 
-            foreach (var node in categories.Elements("category"))
-            {
-                list.Add(node.Value);
-            }
+    //    public async Task<string> SaveFileAsync(byte[] bytes, string fileName, string suffix = null)
+    //    {
+    //        suffix = suffix ?? DateTime.UtcNow.Ticks.ToString();
 
-            post.Categories = list.ToArray();
-        }
+    //        string ext = Path.GetExtension(fileName);
+    //        string name = Path.GetFileNameWithoutExtension(fileName);
 
-        private static void LoadComments(Post post, XElement doc)
-        {
-            var comments = doc.Element("comments");
+    //        string relative = $"files/{name}_{suffix}{ext}";
+    //        string absolute = Path.Combine(_folder, relative);
+    //        string dir = Path.GetDirectoryName(absolute);
 
-            if (comments == null)
-                return;
+    //        Directory.CreateDirectory(dir);
+    //        using (var writer = new FileStream(absolute, FileMode.CreateNew))
+    //        {
+    //            await writer.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+    //        }
 
-            foreach (var node in comments.Elements("comment"))
-            {
-                Comment comment = new Comment()
-                {
-                    ID = ReadAttribute(node, "id"),
-                    Author = ReadValue(node, "author"),
-                    Email = ReadValue(node, "email"),
-                    IsAdmin = bool.Parse(ReadAttribute(node, "isAdmin", "false")),
-                    Content = ReadValue(node, "content"),
-                    PubDate = DateTime.Parse(ReadValue(node, "date", "2000-01-01")),
-                };
+    //        return "/Posts/" + relative;
+    //    }
 
-                post.Comments.Add(comment);
-            }
-        }
+    //    private string GetFilePath(PostViewModel post)
+    //    {
+    //        return Path.Combine(_folder, post.Id + ".xml");
+    //    }
 
-        private static string ReadValue(XElement doc, XName name, string defaultValue = "")
-        {
-            if (doc.Element(name) != null)
-                return doc.Element(name)?.Value;
+    //    private void Initialize()
+    //    {
+    //        LoadPosts();
+    //        SortCache();
+    //    }
 
-            return defaultValue;
-        }
+    //    private void LoadPosts()
+    //    {
+    //        if (!Directory.Exists(_folder))
+    //            Directory.CreateDirectory(_folder);
 
-        private static string ReadAttribute(XElement element, XName name, string defaultValue = "")
-        {
-            if (element.Attribute(name) != null)
-                return element.Attribute(name)?.Value;
+    //        // Can this be done in parallel to speed it up?
+    //        foreach (string file in Directory.EnumerateFiles(_folder, "*.xml", SearchOption.TopDirectoryOnly))
+    //        {
+    //            XElement doc = XElement.Load(file);
 
-            return defaultValue;
-        }
-        protected void SortCache()
-        {
-            _cache.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
-        }
+    //            PostViewModel post = new PostViewModel
+    //            {
+    //                Id = Path.GetFileNameWithoutExtension(file),
+    //                Title = ReadValue(doc, "title"),
+    //                Excerpt = ReadValue(doc, "excerpt"),
+    //                Content = ReadValue(doc, "content"),
+    //                Slug = ReadValue(doc, "slug").ToLowerInvariant(),
+    //                PubDate = DateTime.Parse(ReadValue(doc, "pubDate")),
+    //                LastModified = DateTime.Parse(ReadValue(doc, "lastModified", DateTime.Now.ToString(CultureInfo.InvariantCulture))),
+    //                IsPublished = bool.Parse(ReadValue(doc, "ispublished", "true")),
+    //            };
 
-        protected bool IsAdmin()
-        {
-            return _contextAccessor.HttpContext?.User?.Identity.IsAuthenticated == true;
-        }
+    //            LoadCategories(post, doc);
+    //            LoadComments(post, doc);
+    //            _cache.Add(post);
+    //        }
+    //    }
 
-    }
+    //    private static void LoadCategories(PostViewModel post, XElement doc)
+    //    {
+    //        XElement categories = doc.Element("categories");
+    //        if (categories == null)
+    //            return;
+
+    //        List<string> list = new List<string>();
+
+    //        foreach (var node in categories.Elements("category"))
+    //        {
+    //            list.Add(node.Value);
+    //        }
+
+    //        post.Categories = list.ToList();
+    //    }
+
+    //    private static void LoadComments(PostViewModel post, XElement doc)
+    //    {
+    //        var comments = doc.Element("comments");
+
+    //        if (comments == null)
+    //            return;
+
+    //        foreach (var node in comments.Elements("comment"))
+    //        {
+    //            CommentViewModel comment = new CommentViewModel()
+    //            {
+    //                Id = ReadAttribute(node, "id"),
+    //                Author = ReadValue(node, "author"),
+    //                Email = ReadValue(node, "email"),
+    //                IsAdmin = bool.Parse(ReadAttribute(node, "isAdmin", "false")),
+    //                Content = ReadValue(node, "content"),
+    //                PubDate = DateTime.Parse(ReadValue(node, "date", "2000-01-01")),
+    //            };
+
+    //            post.Comments.Add(comment);
+    //        }
+    //    }
+
+    //    private static string ReadValue(XElement doc, XName name, string defaultValue = "")
+    //    {
+    //        if (doc.Element(name) != null)
+    //            return doc.Element(name)?.Value;
+
+    //        return defaultValue;
+    //    }
+
+    //    private static string ReadAttribute(XElement element, XName name, string defaultValue = "")
+    //    {
+    //        if (element.Attribute(name) != null)
+    //            return element.Attribute(name)?.Value;
+
+    //        return defaultValue;
+    //    }
+    //    protected void SortCache()
+    //    {
+    //        _cache.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
+    //    }
+
+    //    protected bool IsAdmin()
+    //    {
+    //        return _contextAccessor.HttpContext?.User?.Identity.IsAuthenticated == true;
+    //    }
+
+    //}
 }
