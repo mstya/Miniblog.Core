@@ -45,7 +45,7 @@ namespace Miniblog.Core
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<BlogContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddMvc();
 
