@@ -2,11 +2,12 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
-using Microsoft.AspNetCore.Authentication.Cookies;
+//using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Miniblog.Core.Mappers;
 using WilderMinds.MetaWeblog;
+//using Miniblog.Core.Mappers;
+//using WilderMinds.MetaWeblog;
 
 namespace Miniblog.Core.Services
 {
@@ -29,23 +30,23 @@ namespace Miniblog.Core.Services
         {
             ValidateUser(username, password);
 
-            var newPost = new Models.PostViewModel
-            {
-                Title = post.title,
-                Slug = !string.IsNullOrWhiteSpace(post.wp_slug) ? post.wp_slug : Models.PostViewModel.CreateSlug(post.title),
-                Content = post.description,
-                IsPublished = publish,
-                Categories = post.categories.ToList()
-            };
+            //var newPost = new Models.PostViewModel
+            //{
+            //    Title = post.title,
+            //    Slug = !string.IsNullOrWhiteSpace(post.wp_slug) ? post.wp_slug : Models.PostViewModel.CreateSlug(post.title),
+            //    Content = post.description,
+            //    IsPublished = publish,
+            //    Categories = post.categories.ToList()
+            //};
 
-            if (post.dateCreated != DateTime.MinValue)
-            {
-                newPost.PubDate = post.dateCreated;
-            }
+            //if (post.dateCreated != DateTime.MinValue)
+            //{
+            //    newPost.PubDate = post.dateCreated;
+            //}
 
-            _blog.SavePostAsync(newPost.ToPost()).GetAwaiter().GetResult();
+            //_blog.SavePostAsync(newPost.ToPost()).GetAwaiter().GetResult();
 
-            return newPost.Id;
+            return null;//newPost.Id;
         }
 
         public bool DeletePost(string key, string postid, string username, string password, bool publish)
@@ -163,32 +164,32 @@ namespace Miniblog.Core.Services
 
         private void ValidateUser(string username, string password)
         {
-            if (_userServices.ValidateUser(username, password))
-            {
-                throw new MetaWeblogException("Unauthorized");
-            }
+            //if (_userServices.ValidateUser(username, password))
+            //{
+            //    throw new MetaWeblogException("Unauthorized");
+            //}
 
-            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-            identity.AddClaim(new Claim(ClaimTypes.Name, username));
+            //var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+            //identity.AddClaim(new Claim(ClaimTypes.Name, username));
 
-            _context.HttpContext.User = new ClaimsPrincipal(identity);
+            //_context.HttpContext.User = new ClaimsPrincipal(identity);
         }
 
-        private WilderMinds.MetaWeblog.Post ToMetaWebLogPost(Models.PostViewModel post)
-        {
-            var request = _context.HttpContext.Request;
-            string url = request.Scheme + "://" + request.Host;
+        //private WilderMinds.MetaWeblog.Post ToMetaWebLogPost(Models.PostViewModel post)
+        //{
+        //    var request = _context.HttpContext.Request;
+        //    string url = request.Scheme + "://" + request.Host;
 
-            return new WilderMinds.MetaWeblog.Post
-            {
-                postid = post.Id,
-                title = post.Title,
-                wp_slug = post.Slug,
-                permalink = url + post.GetLink(),
-                dateCreated = post.PubDate,
-                description = post.Content,
-                categories = post.Categories.ToArray()
-            };
-        }
+        //    return new WilderMinds.MetaWeblog.Post
+        //    {
+        //        postid = post.Id,
+        //        title = post.Title,
+        //        wp_slug = post.Slug,
+        //        permalink = url + post.GetLink(),
+        //        dateCreated = post.PubDate,
+        //        description = post.Content,
+        //        categories = post.Categories.ToArray()
+        //    };
+        //}
     }
 }

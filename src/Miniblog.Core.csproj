@@ -30,9 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Mappers\" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Remove="wwwroot\Posts\636570721993735050.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -42,8 +39,14 @@
     <Compile Remove="Migrations\20180319164951_InitialCreate.Designer.cs" />
     <Compile Remove="Migrations\20180319164951_InitialCreate.cs" />
     <Compile Remove="Services\FileBlogService.cs" />
+    <Compile Remove="Models\CommentViewModel.cs" />
+    <Compile Remove="Models\LoginViewModel.cs" />
+    <Compile Remove="Models\PostViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
+    <ProjectReference Include="..\Miniblog.Core.Services\Miniblog.Core.Services.csproj" />
+    <ProjectReference Include="..\Miniblig.Core.Web\Miniblig.Core.Web.csproj" />
+    <ProjectReference Include="..\Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj" />
   </ItemGroup>
 </Project>
