@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Miniblog.Core.Db.Entities
+namespace Miniblog.Core.Services.DTO
 {
-    public class Post : BaseEntity
+    public class PostDto
     {
+        public string Id { get; set; }
+
         public string Title { get; set; }
 
         public string Slug { get; set; }
@@ -19,8 +21,8 @@ namespace Miniblog.Core.Db.Entities
 
         public bool IsPublished { get; set; } = true;
 
-        public virtual List<Category> Categories { get; set; } = new List<Category>();
+        public List<string> Categories { get; set; } = new List<string>();
 
-        public virtual List<Comment> Comments { get; set; } = new List<Comment>();
+        public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
     }
 }

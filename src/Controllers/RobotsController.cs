@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,10 @@ using Microsoft.SyndicationFeed.Atom;
 using Microsoft.SyndicationFeed.Rss;
 using Miniblog.Core.Mappers;
 using Miniblog.Core.Services;
+using Miniblog.Core.Web.Models;
 using WebEssentials.AspNetCore.Pwa;
 
-namespace Miniblog.Core.Controllers
+namespace Miniblog.Core.Ui.Controllers
 {
     public class RobotsController : Controller
     {
@@ -43,6 +45,7 @@ namespace Miniblog.Core.Controllers
         [Route("/sitemap.xml")]
         public async Task SitemapXml()
         {
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
             string host = Request.Scheme + "://" + Request.Host;
 
             Response.ContentType = "application/xml";
@@ -52,9 +55,9 @@ namespace Miniblog.Core.Controllers
                 xml.WriteStartDocument();
                 xml.WriteStartElement("urlset", "http://www.sitemaps.org/schemas/sitemap/0.9");
 
-                var posts = (await _blog.GetPostsAsync(int.MaxValue)).ToPostViewModel();
+                var posts = (await _blog.GetPostsAsync(int.MaxValue, token)).ToPostViewModel();
 
-                foreach (Models.PostViewModel post in posts)
+                foreach (PostViewModel post in posts)
                 {
                     var lastMod = new[] { post.PubDate, post.LastModified };
 
@@ -105,15 +108,16 @@ namespace Miniblog.Core.Controllers
         [Route("/feed/{type}")]
         public async Task Rss(string type)
         {
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
             Response.ContentType = "application/xml";
             string host = Request.Scheme + "://" + Request.Host;
 
             using (XmlWriter xmlWriter = XmlWriter.Create(Response.Body, new XmlWriterSettings() { Async = true, Indent = true }))
             {
-                var posts = await _blog.GetPostsAsync(10);
+                var posts = await _blog.GetPostsAsync(10, token);
                 var writer = await GetWriter(type, xmlWriter, posts.Max(p => p.PubDate));
 
-                foreach (Models.PostViewModel post in posts.ToPostViewModel())
+                foreach (PostViewModel post in posts.ToPostViewModel())
                 {
                     var item = new AtomEntry
                     {

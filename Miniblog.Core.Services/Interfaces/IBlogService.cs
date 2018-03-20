@@ -1,24 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Miniblog.Core.Db.Entities;
+using Miniblog.Core.DTO;
 
 namespace Miniblog.Core.Services
 {
     public interface IBlogService
     {
-        Task<List<Post>> GetPostsAsync(int count, int skip = 0);
+        Task<List<PostDto>> GetPostsAsync(int count, CancellationToken token, int skip = 0);
 
-        Task<List<Post>> GetPostsByCategoryAsync(string category);
+        Task<List<PostDto>> GetPostsByCategoryAsync(string category, CancellationToken token);
 
-        Task<Post>  GetPostBySlugAsync(string slug);
+        Task<List<PostDto>> GetPostsByCategoryAsync(string category, int take, CancellationToken token, int skip = 0);
 
-        Task<Post> GetPostByIdAsync(string id);
+        Task<PostDto>  GetPostBySlugAsync(string slug, CancellationToken token);
 
-        Task<List<Category>> GetCategoriesAsync();
+        Task<PostDto> GetPostByIdAsync(string id, CancellationToken token);
 
-        Task SavePostAsync(Post post);
+        Task<List<CategoryDto>> GetCategoriesAsync(CancellationToken token);
 
-        Task DeletePostAsync(Post post, CancellationToken token);
+        Task SavePostAsync(PostDto post, CancellationToken token);
+
+        Task DeletePostAsync(PostDto post, CancellationToken token);
     }
 }

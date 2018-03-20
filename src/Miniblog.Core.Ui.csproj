@@ -44,9 +44,9 @@
     <Compile Remove="Models\PostViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
     <ProjectReference Include="..\Miniblog.Core.Services\Miniblog.Core.Services.csproj" />
     <ProjectReference Include="..\Miniblig.Core.Web\Miniblig.Core.Web.csproj" />
+    <ProjectReference Include="..\Miniblog.Core\Miniblog.Core.csproj" />
     <ProjectReference Include="..\Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj" />
   </ItemGroup>
 </Project>

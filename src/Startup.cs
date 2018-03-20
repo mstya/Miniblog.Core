@@ -9,7 +9,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Miniblog.Core.Db.Entities;
+using Miniblog.Core.Db.Interfaces;
+using Miniblog.Core.Db.Repositories;
 using Miniblog.Core.Services;
+using Miniblog.Core.Services.Interfaces;
 using WebEssentials.AspNetCore.OutputCaching;
 using WebMarkupMin.AspNetCore2;
 using WebMarkupMin.Core;
@@ -19,7 +22,7 @@ using IWmmLogger = WebMarkupMin.Core.Loggers.ILogger;
 using MetaWeblogService = Miniblog.Core.Services.MetaWeblogService;
 using WmmNullLogger = WebMarkupMin.Core.Loggers.NullLogger;
 
-namespace Miniblog.Core
+namespace Miniblog.Core.Ui
 {
     public class Startup
     {
@@ -49,9 +52,12 @@ namespace Miniblog.Core
 
             services.AddMvc();
 
-            services.AddSingleton<IUserServices, BlogUserServices>();
+            services.AddTransient<IRepository, Repository>();
+            services.AddTransient<IUserServices, BlogUserServices>();
             services.AddTransient<IBlogService, MssqlBlogService>();
             services.AddTransient<ICategoryService, CategoryService>();
+            services.AddTransient<ICommentService, CommentService>();
+
             services.Configure<BlogSettings>(Configuration.GetSection("blog"));
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             //services.AddMetaWeblog<MetaWeblogService>();

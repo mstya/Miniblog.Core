@@ -1,37 +1,48 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Miniblog.Core.Db.Entities;
+using Miniblog.Core.DTO;
+
 using Miniblog.Core.Mappers;
-using Miniblog.Core.Models;
+using Miniblog.Core.Web.Models;
 using Miniblog.Core.Services;
 using WebEssentials.AspNetCore.Pwa;
+using Miniblog.Core.Services.Interfaces;
 
-namespace Miniblog.Core.Controllers
+namespace Miniblog.Core.Ui.Controllers
 {
     public class BlogController : Controller
     {
         private readonly IBlogService _blog;
-        private readonly IOptionsSnapshot<BlogSettings> _settings;
+        private readonly IOptionsSnapshot<BlogSettings> settings;
         private readonly WebManifest _manifest;
         private readonly ICategoryService categoryService;
+        private readonly ICommentService commentService;
 
-        public BlogController(IBlogService blog, IOptionsSnapshot<BlogSettings> settings, WebManifest manifest, ICategoryService categoryService)
+        public BlogController(IBlogService blog, 
+                              IOptionsSnapshot<BlogSettings> settings, 
+                              WebManifest manifest, 
+                              ICategoryService categoryService,
+                              ICommentService commentService)
         {
             _blog = blog;
-            _settings = settings;
+            this.settings = settings;
             _manifest = manifest;
             this.categoryService = categoryService;
+            this.commentService = commentService;
         }
 
         [Route("/{page:int?}")]
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Index([FromRoute]int page = 0)
         {
-            var posts = await _blog.GetPostsAsync(_settings.Value.PostsPerPage, _settings.Value.PostsPerPage * page);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            var posts = await _blog.GetPostsAsync(settings.Value.PostsPerPage, token, settings.Value.PostsPerPage * page);
             ViewData["Title"] = _manifest.Name;
             ViewData["Description"] = _manifest.Description;
             ViewData["prev"] = $"/{page + 1}/";
@@ -43,7 +54,11 @@ namespace Miniblog.Core.Controllers
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Category(string category, int page = 0)
         {
-            var posts = (await _blog.GetPostsByCategoryAsync(category)).Skip(_settings.Value.PostsPerPage * page).Take(_settings.Value.PostsPerPage).ToList();
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            var posts = await _blog.GetPostsByCategoryAsync(category,
+                                                             take: settings.Value.PostsPerPage * page,
+                                                             token: token,
+                                                             skip: settings.Value.PostsPerPage);
             ViewData["Title"] = _manifest.Name + " " + category;
             ViewData["Description"] = $"Articles posted in the {category} category";
             ViewData["prev"] = $"/blog/category/{category}/{page + 1}/";
@@ -63,7 +78,8 @@ namespace Miniblog.Core.Controllers
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Post(string slug)
         {
-            var post = await _blog.GetPostBySlugAsync(slug);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            PostDto post = await _blog.GetPostBySlugAsync(slug, token);
 
             if (post != null)
             {
@@ -82,7 +98,8 @@ namespace Miniblog.Core.Controllers
                 return View(new PostViewModel());
             }
 
-            var post = await _blog.GetPostByIdAsync(id);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            PostDto post = await _blog.GetPostByIdAsync(id, token);
 
             if (post != null)
             {
@@ -101,8 +118,9 @@ namespace Miniblog.Core.Controllers
                 return View("Edit", postViewModel);
             }
 
-            var post = postViewModel.ToPost();
-            var existing = await _blog.GetPostByIdAsync(postViewModel.Id);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            PostDto post = postViewModel.ToPostDto();
+            PostDto existing = await _blog.GetPostByIdAsync(postViewModel.Id, token);
             string categories = Request.Form["categories"];
 
             if(existing == null)
@@ -118,13 +136,9 @@ namespace Miniblog.Core.Controllers
                 existing.Excerpt = postViewModel.Excerpt.Trim();
             }
 
-            await categoryService.RemoveForPost(existing.Id);
-            existing.Categories = categories.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(c => new Category
-            {
-                Name = c.Trim().ToLowerInvariant()
-            }).ToList();
+            existing.Categories = categories.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim().ToLowerInvariant()).ToList();
 
-            await this._blog.SavePostAsync(existing);
+            await this._blog.SavePostAsync(existing, token);
 
             return Redirect(postViewModel.GetLink());
         }
@@ -133,7 +147,8 @@ namespace Miniblog.Core.Controllers
         [HttpPost, Authorize, AutoValidateAntiforgeryToken]
         public async Task<IActionResult> DeletePost(string id)
         {
-            var existing = await _blog.GetPostByIdAsync(id);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            var existing = await _blog.GetPostByIdAsync(id, token);
             var cancellationToken = this.Response.HttpContext.RequestAborted;
             if (existing != null)
             {
@@ -148,14 +163,15 @@ namespace Miniblog.Core.Controllers
         [HttpPost]
         public async Task<IActionResult> AddComment(string postId, CommentViewModel commentViewModel)
         {
-            var post = await _blog.GetPostByIdAsync(postId);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            PostDto post = await _blog.GetPostByIdAsync(postId, token);
 
             if (!ModelState.IsValid)
             {
                 return View("Post", post);
             }
 
-            if (post == null || !post.AreCommentsOpen(_settings.Value.CommentsCloseAfterDays))
+            if (post == null || !post.AreCommentsOpen(settings.Value.CommentsCloseAfterDays))
             {
                 return NotFound();
             }
@@ -169,9 +185,8 @@ namespace Miniblog.Core.Controllers
             // unless the comment was posted by a spam robot
             if (!Request.Form.ContainsKey("website"))
             {
-                var comment = commentViewModel.ToComment();
-                post.Comments.Add(comment);
-                await _blog.SavePostAsync(post);
+                CommentDto comment = commentViewModel.ToCommentDto(postId);
+                await this.commentService.SaveCommentAsync(comment, token);
             }
 
             return Redirect(post.GetLink() + "#" + commentViewModel.Id);
@@ -181,22 +196,10 @@ namespace Miniblog.Core.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteComment(string postId, string commentId)
         {
-            var post = await _blog.GetPostByIdAsync(postId);
+            CancellationToken token = this.Request.HttpContext.RequestAborted;
+            var post = await _blog.GetPostByIdAsync(postId, token);
 
-            if (post == null)
-            {
-                return NotFound();
-            }
-
-            var comment = post.Comments.FirstOrDefault(c => c.Id.Equals(commentId, StringComparison.OrdinalIgnoreCase));
-
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            post.Comments.Remove(comment);
-            await _blog.SavePostAsync(post);
+            await this.commentService.DeleteByIdAsync(commentId, token);
 
             return Redirect(post.GetLink() + "#comments");
         }

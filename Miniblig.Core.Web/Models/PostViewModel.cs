@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Miniblog.Core.Models
+namespace Miniblog.Core.Web.Models
 {
     public class PostViewModel
     {

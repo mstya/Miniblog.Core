@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Miniblog.Core.Controllers
+namespace Miniblog.Core.Ui.Controllers
 {
     public class SharedController : Controller
     {

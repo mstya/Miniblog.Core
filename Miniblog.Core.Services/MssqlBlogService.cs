@@ -1,74 +1,106 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Miniblog.Core.Db.Entities;
+using Miniblog.Core.Db.Interfaces;
+using Miniblog.Core.DTO;
+using Miniblog.Core.Mappers;
 
 namespace Miniblog.Core.Services
 {
     public class MssqlBlogService : IBlogService
     {
-        private BlogContext db;
         private readonly IHttpContextAccessor contextAccessor;
+        private IRepository repository;
+        private ICategoryService categoryService;
 
-        public MssqlBlogService(BlogContext db, IHttpContextAccessor contextAccessor)
+        public MssqlBlogService(IHttpContextAccessor contextAccessor, IRepository repository, ICategoryService categoryService)
         {
-            this.db = db;
             this.contextAccessor = contextAccessor;
+            this.repository = repository;
+            this.categoryService = categoryService;
         }
 
-        public Task DeletePostAsync(Post post, CancellationToken token)
+        public Task DeletePostAsync(PostDto postDto, CancellationToken token)
         {
-            this.db.Posts.Remove(post);
-            return this.db.SaveChangesAsync(token);
+            return this.repository.DeleteAsync(postDto.ToPost(), token);
         }
 
-        public Task<List<Category>> GetCategoriesAsync()
+        public async Task<List<CategoryDto>> GetCategoriesAsync(CancellationToken token)
         {
             bool isAdmin = IsAdmin();
 
-            return this.db.Posts.Where(p => p.IsPublished || isAdmin)
-                .SelectMany(post => post.Categories)
-                .Select(cat => cat)
-                .Distinct()
-                       .ToListAsync();
+            return (await this.repository.GetAllAsync<Post>()
+                       .Where(p => p.IsPublished || isAdmin)
+                       .SelectMany(post => post.Categories)
+                       .Select(cat => cat)
+                       .Distinct()
+                    .ToListAsync(token)).ToCategoryDto();
         }
 
-        public Task<Post> GetPostByIdAsync(string id)
+        public async Task<PostDto> GetPostByIdAsync(string id, CancellationToken token)
         {
-            return this.db.Posts.Include(c => c.Categories).Include(x => x.Comments).FirstOrDefaultAsync(x => x.Id == id);
+            return (await this.repository
+                       .GetAllAsync<Post>()
+                       .Include(c => c.Categories)
+                       .Include(x => x.Comments)
+                    .FirstOrDefaultAsync(x => x.Id == id, token)).ToPostDto();
         }
 
-        public Task<Post> GetPostBySlugAsync(string slug)
+        public async Task<PostDto> GetPostBySlugAsync(string slug, CancellationToken token)
         {
-            return this.db.Posts.Include(c => c.Categories).Include(x => x.Comments).FirstOrDefaultAsync(x => x.Slug == slug);
+            return (await this.repository
+                       .GetAllAsync<Post>()
+                       .Include(c => c.Categories)
+                       .Include(x => x.Comments)
+                       .FirstOrDefaultAsync(x => x.Slug == slug, token)).ToPostDto();
         }
 
-        public Task<List<Post>> GetPostsAsync(int count, int skip = 0)
+        public async Task<List<PostDto>> GetPostsAsync(int count, CancellationToken token, int skip = 0)
         {
-            return this.db.Posts.Skip(skip).Take(count).Include(x => x.Comments).ToListAsync();
+            return (await this.repository
+                       .GetAllAsync<Post>()
+                       .Skip(skip)
+                       .Take(count)
+                       .Include(x => x.Comments)
+                       .ToListAsync(token))
+                .ToPostDto();
         }
 
-        public Task<List<Post>> GetPostsByCategoryAsync(string category)
+        public async Task<List<PostDto>> GetPostsByCategoryAsync(string category, CancellationToken token)
         {
-            return this.db.Posts.Where(x => x.Categories.Any(c => c.Name == category)).ToListAsync();
+            return (await this.repository
+                       .GetAllAsync<Post>()
+                       .Where(x => x.Categories.Any(c => c.Name == category))
+                       .ToListAsync(token))
+                .ToPostDto();
         }
 
-        public async Task SavePostAsync(Post post)
+        public async Task<List<PostDto>> GetPostsByCategoryAsync(string category, int take, CancellationToken token, int skip = 0)
         {
-            if (string.IsNullOrEmpty(post.Id))
+            return (await this.repository
+                       .GetAllAsync<Post>()
+                       .Where(x => x.Categories.Any(c => c.Name == category))
+                       .Skip(skip)
+                       .Take(take)
+                    .ToListAsync(token)).ToPostDto();
+        }
+
+        public async Task SavePostAsync(PostDto postDto, CancellationToken token)
+        {
+            Post post = postDto.ToPost();
+
+            await this.categoryService.RemoveForPost(post.Id, token);
+            await this.repository.AddOrUpdateAsync(post, token);
+
+            foreach (var category in post.Categories)
             {
-                post.Id = Guid.NewGuid().ToString();
-                await this.db.Posts.AddAsync(post);
-                await this.db.SaveChangesAsync();
-                return;
+                category.Post = post;
+                await this.repository.AddOrUpdateAsync(category, token);
             }
-
-            this.db.Posts.Update(post);
-            await this.db.SaveChangesAsync();
         }
 
         protected bool IsAdmin()

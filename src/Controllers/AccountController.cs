@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Miniblog.Core.Models;
+using Miniblog.Core.Web.Models;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Miniblog.Core.Services;
 
-namespace Miniblog.Core.Controllers
+namespace Miniblog.Core.Ui.Controllers
 {
     [Authorize]
     public class AccountController : Controller

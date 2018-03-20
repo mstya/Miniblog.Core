@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
+    <ProjectReference Include="..\Miniblog.Core\Miniblog.Core.csproj" />
+    <ProjectReference Include="..\Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="WilderMinds.MetaWeblog" Version="1.2.3" />

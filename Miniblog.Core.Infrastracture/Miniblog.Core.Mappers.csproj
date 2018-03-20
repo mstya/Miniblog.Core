@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Mappers\" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
-    <ProjectReference Include="..\Miniblig.Core.Web\Miniblig.Core.Web.csproj" />
   </ItemGroup>
 </Project>
