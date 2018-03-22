@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Class1.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Miniblog.Core.Db\Miniblog.Core.Db.csproj" />
+    <ProjectReference Include="..\Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj" />
+    <ProjectReference Include="..\Miniblog.Core\Miniblog.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="1.2.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.0.2" />
+  </ItemGroup>
+</Project>

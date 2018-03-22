@@ -3,22 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27013.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Ui", "src\Miniblog.Core.Ui.csproj", "{8CE1A353-8B0D-43F1-B681-6057BAC241BC}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E78285B4-DA3B-430D-8E6E-EA02C0FCB8F9}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Db", "Miniblog.Core.Db\Miniblog.Core.Db.csproj", "{621F80C6-4C82-44D4-83A9-745B8703AFCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miniblog.Core.Db", "src\Miniblog.Core.Db\Miniblog.Core.Db.csproj", "{621F80C6-4C82-44D4-83A9-745B8703AFCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Services", "Miniblog.Core.Services\Miniblog.Core.Services.csproj", "{CFA3EE88-2597-49B5-A32D-A8E7E389AB69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miniblog.Core.Services", "src\Miniblog.Core.Services\Miniblog.Core.Services.csproj", "{CFA3EE88-2597-49B5-A32D-A8E7E389AB69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblig.Core.Web", "Miniblig.Core.Web\Miniblig.Core.Web.csproj", "{805E928C-8F9A-46CA-8AE2-8517F11D83B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miniblog.Core.Web", "src\Miniblog.Core.Web\Miniblog.Core.Web.csproj", "{805E928C-8F9A-46CA-8AE2-8517F11D83B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core", "Miniblog.Core\Miniblog.Core.csproj", "{93742A98-3807-4337-9E44-658501A74EDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miniblog.Core", "src\Miniblog.Core\Miniblog.Core.csproj", "{93742A98-3807-4337-9E44-658501A74EDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Mappers", "Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj", "{1AA5FE35-1A65-40E3-89A6-39E1A9556809}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Mappers", "src\Miniblog.Core.Mappers\Miniblog.Core.Mappers.csproj", "{D06E0D37-D9EB-494F-A3C1-8D6CC0BE22A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniblog.Core.Ui", "src\Miniblog.Core.Ui\Miniblog.Core.Ui.csproj", "{DD730002-682A-4871-A203-9BB9FC530558}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,18 +42,18 @@ Global
 		{805E928C-8F9A-46CA-8AE2-8517F11D83B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{805E928C-8F9A-46CA-8AE2-8517F11D83B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{805E928C-8F9A-46CA-8AE2-8517F11D83B4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4E49038F-E098-4D04-A586-8E655624DF40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4E49038F-E098-4D04-A586-8E655624DF40}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4E49038F-E098-4D04-A586-8E655624DF40}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4E49038F-E098-4D04-A586-8E655624DF40}.Release|Any CPU.Build.0 = Release|Any CPU
 		{93742A98-3807-4337-9E44-658501A74EDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{93742A98-3807-4337-9E44-658501A74EDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93742A98-3807-4337-9E44-658501A74EDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93742A98-3807-4337-9E44-658501A74EDA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1AA5FE35-1A65-40E3-89A6-39E1A9556809}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1AA5FE35-1A65-40E3-89A6-39E1A9556809}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1AA5FE35-1A65-40E3-89A6-39E1A9556809}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1AA5FE35-1A65-40E3-89A6-39E1A9556809}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D06E0D37-D9EB-494F-A3C1-8D6CC0BE22A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D06E0D37-D9EB-494F-A3C1-8D6CC0BE22A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D06E0D37-D9EB-494F-A3C1-8D6CC0BE22A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D06E0D37-D9EB-494F-A3C1-8D6CC0BE22A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD730002-682A-4871-A203-9BB9FC530558}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD730002-682A-4871-A203-9BB9FC530558}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD730002-682A-4871-A203-9BB9FC530558}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD730002-682A-4871-A203-9BB9FC530558}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
