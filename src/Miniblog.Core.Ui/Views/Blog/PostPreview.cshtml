@@ -20,11 +20,9 @@
             <a asp-controller="Blog" asp-action="edit" asp-route-id="@Model.Id" title="Edit the post">Edit post</a>
         }
     </header>
-
     <div itemprop="articleBody mainEntityOfPage" cdnify>
-        @Html.Raw(Model.RenderContent())
+        @Model.Excerpt
     </div>
-
     <footer>
         @if (Model.Categories.Any())
         {

@@ -128,11 +128,6 @@ namespace Miniblog.Core.Ui
                 return next();
             });
 
-            app.UseStatusCodePagesWithReExecute("/Shared/Error");
-            app.UseWebOptimizer();
-
-            app.UseStaticFilesWithCache();
-
             if (Configuration.GetValue<bool>("forcessl"))
             {
                 app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
@@ -141,8 +136,14 @@ namespace Miniblog.Core.Ui
             //app.UseMetaWeblog("/metaweblog");
             app.UseAuthentication();
 
+            app.UseStatusCodePagesWithReExecute("/Shared/Error");
+            app.UseStaticFilesWithCache();
+            app.UseWebOptimizer();
             app.UseOutputCaching();
-            app.UseWebMarkupMin();
+            if (env.IsProduction())
+            {
+                app.UseWebMarkupMin();
+            }
 
             app.UseMvc(routes =>
             {

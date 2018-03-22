@@ -6,7 +6,7 @@
 
 @foreach (var post in Model)
 {
-    await Html.RenderPartialAsync("Post.cshtml", post);
+    await Html.RenderPartialAsync("PostPreview", post);
 }
 
 <nav class="pagination container" aria-label="Pagination">
