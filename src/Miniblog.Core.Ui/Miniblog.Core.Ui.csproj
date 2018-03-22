@@ -5,6 +5,7 @@
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
+    <UserSecretsId>af95a98d-ac92-4545-b9fb-125b438d1d22</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
+    <DotNetCliToolReference Include="Microsoft.Extensions.SecretManager.Tools" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

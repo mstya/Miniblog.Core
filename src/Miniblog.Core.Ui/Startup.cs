@@ -26,21 +26,28 @@ namespace Miniblog.Core.Ui
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
+            var builder = new ConfigurationBuilder();
+
+            if (env.IsDevelopment())
+            {
+                builder.AddUserSecrets<Startup>();
+            }
+
             Configuration = configuration;
         }
 
-        public static void Main(string[] args)
-        {
-            BuildWebHost(args).Run();
-        }
+        //public static void Main(string[] args)
+        //{
+        //    BuildWebHost(args).Run();
+        //}
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-                .UseKestrel(a => a.AddServerHeader = false)
-                .Build();
+        //public static IWebHost BuildWebHost(string[] args)  {
+        //    var builder = WebHost.CreateDefaultBuilder(args)
+        //        .UseStartup<Startup>()
+        //        .UseKestrel(a => a.AddServerHeader = false).Build();
+        //}
 
         public IConfiguration Configuration { get; }
 
