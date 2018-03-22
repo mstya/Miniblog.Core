@@ -38,17 +38,6 @@ namespace Miniblog.Core.Ui
             Configuration = configuration;
         }
 
-        //public static void Main(string[] args)
-        //{
-        //    BuildWebHost(args).Run();
-        //}
-
-        //public static IWebHost BuildWebHost(string[] args)  {
-        //    var builder = WebHost.CreateDefaultBuilder(args)
-        //        .UseStartup<Startup>()
-        //        .UseKestrel(a => a.AddServerHeader = false).Build();
-        //}
-
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
