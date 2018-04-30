@@ -66,6 +66,8 @@ namespace Miniblog.Core.Services
                        .Skip(skip)
                        .Take(count)
                        .Include(x => x.Comments)
+                        .Include(x => x.Categories)
+                        .OrderByDescending(x => x.PubDate)
                        .ToListAsync(token))
                 .ToPostDto();
         }

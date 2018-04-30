@@ -10,7 +10,7 @@ namespace Miniblog.Core.Db.Interfaces
     {
         Task<string> AddOrUpdateAsync<T>(T entity, CancellationToken token) where T : BaseEntity;
 
-        Task DeleteAsync<T>(T entity, CancellationToken token) where T : BaseEntity;
+        Task DeleteAsync<T>(T entity, CancellationToken token) where T : BaseEntity, new();
 
         Task DeleteCollectionAsync<T>(ICollection<T> collection, CancellationToken token) where T : BaseEntity;
 

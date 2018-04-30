@@ -34,9 +34,13 @@ namespace Miniblog.Core.Db.Repositories
             return entity.Id;
         }
 
-        public Task DeleteAsync<T>(T entity, CancellationToken token) where T : BaseEntity
+        public Task DeleteAsync<T>(T entity, CancellationToken token) where T : BaseEntity, new()
         {
-            this.context.Set<T>().Remove(entity);
+            var local = this.context.Set<T>()
+                .Local
+                .FirstOrDefault(entry => entry.Id.Equals(entity.Id));
+
+            this.context.Set<T>().Remove(local);
             return this.SaveChangesAsync(token);
         }
 

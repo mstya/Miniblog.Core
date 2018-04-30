@@ -1,7 +1,7 @@
-{
-  "name": "Mstya.NET",
-  "short_name": "Mstya.NET",
-  "description": "A short description of the blog.",
+﻿{
+  "name": "ТурБлог",
+  "short_name": "ТурБлог",
+  "description": "ТурБлог .NET blog.",
   "icons": [
     {
       "src": "/img/icon192x192.png",

@@ -88,7 +88,7 @@ namespace Miniblog.Core.Ui.Controllers
                 xml.WriteStartElement("service");
 
                 xml.WriteElementString("enginename", "Miniblog.Core");
-                xml.WriteElementString("enginelink", "http://github.com/madskristensen/Miniblog.Core/");
+                xml.WriteElementString("enginelink", "https://github.com/mstya/Miniblog.Core");
                 xml.WriteElementString("homepagelink", host);
 
                 xml.WriteStartElement("apis");
@@ -134,7 +134,7 @@ namespace Miniblog.Core.Ui.Controllers
                         item.AddCategory(new SyndicationCategory(category));
                     }
 
-                    item.AddContributor(new SyndicationPerson(_settings.Value.Owner, "test@example.com"));
+                    item.AddContributor(new SyndicationPerson(_settings.Value.Owner, "slavikbr7@gmail.com"));
                     item.AddLink(new SyndicationLink(new Uri(item.Id)));
 
                     await writer.Write(item);
