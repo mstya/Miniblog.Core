@@ -7,13 +7,13 @@
     string host = Context.Request.Scheme + "://" + Context.Request.Host;
 }
 
-@section Head {
+@*@section Head {
     <link rel="canonical" href="@(host + Model.GetLink())" />
-}
+}*@
 
 <article class="post container" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost">
     <header>
-        <h1 itemprop="name headline"><a href="@Model.GetLink()" rel="canonical" itemprop="url">@Model.Title</a></h1>
+        <h1 itemprop="name headline"><a href="@Model.GetLink()" itemprop="url">@Model.Title</a></h1>
         <time datetime="@Model.PubDate.ToString("s")" itemprop="datePublished">Published @Model.PubDate.ToString("MMM d, yyyy")</time>
         @if (User.Identity.IsAuthenticated)
         {
